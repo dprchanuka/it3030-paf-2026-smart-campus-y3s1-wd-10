@@ -80,6 +80,44 @@ public class AuthController {
         return ResponseEntity.ok(userService.searchUsers(search, role));
     }
 
+    /** Export filtered users to CSV (Admin only) */
+    @GetMapping(value = "/users/export", produces = "text/csv")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> exportUsers(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String role) {
+        List<UserResponse> users = userService.searchUsers(search, role);
+        
+        StringBuilder csv = new StringBuilder();
+        csv.append("Name,Email,Role,Joined Date\n");
+        
+        for (UserResponse u : users) {
+            String date = u.getCreatedAt() != null ? u.getCreatedAt().toString().substring(0, 10) : "";
+            csv.append(escapeCsv(u.getName())).append(",")
+               .append(escapeCsv(u.getEmail())).append(",")
+               .append(u.getRole()).append(",")
+               .append(date).append("\n");
+        }
+
+        String filename = "users_export_" + java.time.LocalDate.now().toString() + ".csv";
+        
+        org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+        headers.add("Content-Disposition", "attachment; filename=" + filename);
+        headers.add("Content-Type", "text/csv; charset=UTF-8");
+        
+        return new ResponseEntity<>(csv.toString(), headers, HttpStatus.OK);
+    }
+    
+    private String escapeCsv(String data) {
+        if (data == null) return "";
+        String escapedData = data.replaceAll("\\R", " ");
+        if (data.contains(",") || data.contains("\"") || data.contains("'")) {
+            data = data.replace("\"", "\"\"");
+            escapedData = "\"" + data + "\"";
+        }
+        return escapedData;
+    }
+
     /** Update user role (Admin only) */
     @PutMapping("/users/{id}/role")
     @PreAuthorize("hasRole('ADMIN')")

@@ -43,6 +43,12 @@ export const authApi = {
     if (role && role !== 'ALL') params.role = role;
     return api.get('/api/auth/users', { params });
   },
+  exportUsers: (search?: string, role?: string) => {
+    const params: any = {};
+    if (search) params.search = search;
+    if (role && role !== 'ALL') params.role = role;
+    return api.get('/api/auth/users/export', { params, responseType: 'blob' });
+  },
   updateRole: (id: string, role: string) =>
     api.put(`/api/auth/users/${id}/role`, { role }),
   deleteUser: (id: string) => api.delete(`/api/auth/users/${id}`),

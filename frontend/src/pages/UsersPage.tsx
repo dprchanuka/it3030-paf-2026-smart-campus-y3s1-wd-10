@@ -9,6 +9,7 @@ import {
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SearchIcon from '@mui/icons-material/Search';
+import DownloadIcon from '@mui/icons-material/Download';
 
 const ROLES = ['USER', 'ADMIN', 'TECHNICIAN'];
 const ROLE_FILTER_OPTIONS = ['ALL', 'ADMIN', 'TECHNICIAN', 'USER'];
@@ -20,6 +21,7 @@ const UsersPage: React.FC = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<any>(null);
   const [deleting, setDeleting] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   // Search & filter state
   const [searchInput, setSearchInput] = useState('');
@@ -95,6 +97,26 @@ const UsersPage: React.FC = () => {
     setUserToDelete(null);
   };
 
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const res = await authApi.exportUsers(searchQuery, roleFilter);
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const a = document.createElement('a');
+      a.href = url;
+      const filename = `users_export_${new Date().toISOString().split('T')[0]}.csv`;
+      a.setAttribute('download', filename);
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err: any) {
+      setError('Failed to export users to CSV');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const roleColor = (r: string) => {
     const map: Record<string, any> = { ADMIN: 'error', TECHNICIAN: 'warning', USER: 'primary' };
     return map[r] || 'default';
@@ -139,6 +161,16 @@ const UsersPage: React.FC = () => {
             </MenuItem>
           ))}
         </TextField>
+        <Box sx={{ flexGrow: 1 }} />
+        <Button
+          variant="outlined"
+          startIcon={exporting ? <CircularProgress size={20} color="inherit" /> : <DownloadIcon />}
+          onClick={handleExport}
+          disabled={exporting || loading}
+          sx={{ height: 40 }}
+        >
+          {exporting ? 'Exporting...' : 'Export to CSV'}
+        </Button>
       </Box>
 
       {/* Loading Indicator */}
