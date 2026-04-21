@@ -38,6 +38,7 @@ export const authApi = {
   getUsers: () => api.get('/api/auth/users'),
   updateRole: (id: string, role: string) =>
     api.put(`/api/auth/users/${id}/role`, { role }),
+  deleteUser: (id: string) => api.delete(`/api/auth/users/${id}`),
 };
 
 // ==================== Resources ====================

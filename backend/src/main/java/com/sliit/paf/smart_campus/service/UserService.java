@@ -1,13 +1,15 @@
 package com.sliit.paf.smart_campus.service;
 
 import com.sliit.paf.smart_campus.dto.response.UserResponse;
+import com.sliit.paf.smart_campus.exception.ForbiddenException;
 import com.sliit.paf.smart_campus.exception.ResourceNotFoundException;
 import com.sliit.paf.smart_campus.model.User;
 import com.sliit.paf.smart_campus.model.User.Role;
-import com.sliit.paf.smart_campus.repository.UserRepository;
+import com.sliit.paf.smart_campus.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.Arrays;
@@ -19,6 +21,10 @@ import java.util.stream.Collectors;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final BookingRepository bookingRepository;
+    private final TicketRepository ticketRepository;
+    private final CommentRepository commentRepository;
+    private final NotificationRepository notificationRepository;
 
     @Value("${app.admin.emails:admin@sliit.lk}")
     private String adminEmails;
@@ -63,6 +69,27 @@ public class UserService {
         User user = getUserById(id);
         user.setRole(Role.valueOf(role));
         return toResponse(userRepository.save(user));
+    }
+
+    /** Delete a user and all their related data (cascade delete) */
+    @Transactional
+    public void deleteUser(String userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));
+
+        // Prevent deletion of admin users
+        if (user.getRole() == Role.ADMIN) {
+            throw new ForbiddenException("Cannot delete admin users");
+        }
+
+        // Cascade delete all related entities
+        bookingRepository.deleteByUserId(userId);
+        ticketRepository.deleteByUserId(userId);
+        commentRepository.deleteByUserId(userId);
+        notificationRepository.deleteByUserId(userId);
+
+        // Delete the user
+        userRepository.deleteById(userId);
     }
 
     public UserResponse toResponse(User user) {

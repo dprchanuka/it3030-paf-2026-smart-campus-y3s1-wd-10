@@ -67,4 +67,12 @@ public class AuthController {
             @PathVariable String id, @RequestBody Map<String, String> body) {
         return ResponseEntity.ok(userService.updateUserRole(id, body.get("role")));
     }
+
+    /** Delete a user and all their related data (Admin only) */
+    @DeleteMapping("/users/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteUser(@PathVariable String id) {
+        userService.deleteUser(id);
+        return ResponseEntity.noContent().build();
+    }
 }
