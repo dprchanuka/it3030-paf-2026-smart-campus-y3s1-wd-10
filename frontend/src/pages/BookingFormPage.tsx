@@ -41,6 +41,9 @@ const BookingFormPage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
+  // Get today's date in YYYY-MM-DD format for min attribute
+  const today = new Date().toISOString().split('T')[0];
+
   useEffect(() => {
     resourceApi
       .getAll({ status: 'ACTIVE' })
@@ -52,6 +55,21 @@ const BookingFormPage: React.FC = () => {
     e.preventDefault();
     setSaving(true);
     setError('');
+
+    // Validation: date cannot be in the past
+    if (form.date && form.date < today) {
+      setError('Booking date cannot be in the past. Please select today or a future date.');
+      setSaving(false);
+      return;
+    }
+
+    // Validation: start time must be before end time
+    if (form.startTime && form.endTime && form.startTime >= form.endTime) {
+      setError('Start time must be before end time.');
+      setSaving(false);
+      return;
+    }
+
     try {
       await bookingApi.create(form);
       navigate('/bookings');
@@ -147,7 +165,7 @@ const BookingFormPage: React.FC = () => {
               ))}
             </TextField>
 
-            {/* Date */}
+            {/* Date with min = today */}
             <TextField
               fullWidth
               label="Date"
@@ -164,6 +182,7 @@ const BookingFormPage: React.FC = () => {
                       <CalendarToday color="primary" />
                     </InputAdornment>
                   ),
+                  inputProps: { min: today }, // Prevents past dates
                 },
               }}
             />
