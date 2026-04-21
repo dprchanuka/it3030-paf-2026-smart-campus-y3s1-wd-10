@@ -35,7 +35,12 @@ export const authApi = {
   login: (email: string, password: string) =>
     api.post('/api/auth/signin', { email, password }),
   getMe: () => api.get('/api/auth/me'),
-  getUsers: () => api.get('/api/auth/users'),
+  getUsers: (search?: string, role?: string) => {
+    const params: any = {};
+    if (search) params.search = search;
+    if (role && role !== 'ALL') params.role = role;
+    return api.get('/api/auth/users', { params });
+  },
   updateRole: (id: string, role: string) =>
     api.put(`/api/auth/users/${id}/role`, { role }),
   deleteUser: (id: string) => api.delete(`/api/auth/users/${id}`),

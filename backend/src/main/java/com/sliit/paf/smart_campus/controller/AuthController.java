@@ -53,11 +53,13 @@ public class AuthController {
         return ResponseEntity.ok(userService.toResponse(user));
     }
 
-    /** Get all users (Admin only) */
+    /** Get all users with optional search and role filter (Admin only) */
     @GetMapping("/users")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<UserResponse>> getAllUsers() {
-        return ResponseEntity.ok(userService.getAllUsers());
+    public ResponseEntity<List<UserResponse>> getAllUsers(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String role) {
+        return ResponseEntity.ok(userService.searchUsers(search, role));
     }
 
     /** Update user role (Admin only) */
